@@ -1,4 +1,4 @@
-$tenantId = "your-tenant-id"
+$tenantId = "ui"
 $clientId = "your-client-id"
 $clientSecret = "your-client-secret"
 $scope = "https://graph.microsoft.com/.default"
