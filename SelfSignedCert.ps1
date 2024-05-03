@@ -1,4 +1,7 @@
-<# 
+<#
+#Requires -RunAsAdministrator 
+
+ 
 
 .SYNOPSIS 
 
@@ -151,7 +154,7 @@ function CreateSelfSignedCertificate(){
     $ekuext = new-object -com "X509Enrollment.CX509ExtensionEnhancedKeyUsage.1" 
 
     $ekuext.InitializeEncode($ekuoids) 
- 
+
  
 
     $cert = new-object -com "X509Enrollment.CX509CertificateRequestCertificate.1" 
