@@ -5,15 +5,16 @@ Install-Module -Name MSAL.PS -Scope CurrentUser -Force
 # Constants
 $tenantId = "your-tenant-id"
 $clientId = "your-application-id"
-$clientSecret = "your-client-secret"
 $excelPath = "C:\path\to\your\file.xlsx"
 $sheetName = "Sheet1"
+$certThumbprint = "YOUR_CERT_THUMBPRINT"
 
-# Authenticate and Acquire Token
+# Authenticate and Acquire Token using Certificate
+$cert = Get-ChildItem -Path Cert:\CurrentUser\My\ | Where-Object {$_.Thumbprint -eq $certThumbprint}
 $tokenRequest = @{
     ClientId     = $clientId
     TenantId     = $tenantId
-    ClientSecret = $clientSecret
+    Certificate  = $cert
     Scope        = "https://graph.microsoft.com/.default"
 }
 $authToken = Get-MsalToken @tokenRequest
