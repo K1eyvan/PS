@@ -1,43 +1,47 @@
 # Required Modules
 Import-Module ImportExcel  # Ensure you have the ImportExcel module installed
 Import-Module SharePointPnPPowerShellOnline  # Ensure PnP PowerShell is installed
+Import-Module MicrosoftTeams  # Ensure the Teams PowerShell module is installed
 
-# Function to connect to SharePoint
-function ConnectToSharePoint {
+# Function to connect to SharePoint and Teams
+function ConnectToServices {
     $adminUrl = "https://<your-tenant>-admin.sharepoint.com"
     $userCredential = Get-Credential
     Connect-PnPOnline -Url $adminUrl -Credentials $userCredential
+    Connect-MicrosoftTeams -Credential $userCredential
 }
 
-# Read Group IDs from Excel
+# Read Channel IDs from Excel
 $excelPath = "C:\Path\To\Your\ExcelFile.xlsx"
-$groups = Import-Excel -Path $excelPath
+$channels = Import-Excel -Path $excelPath
 
-# Connect to SharePoint
-ConnectToSharePoint
+# Connect to Services
+ConnectToServices
 
 # Prepare results list
 $results = @()
 
-# Retrieve SharePoint URLs using Group IDs and store results
-foreach ($group in $groups) {
-    $groupId = $group.ID  # Ensure your Excel has a column named 'ID' for Group IDs
+# Retrieve SharePoint URLs using Channel IDs and store results
+foreach ($channel in $channels) {
+    $channelId = $channel.ID  # Ensure your Excel has a column named 'ID' for Channel IDs
     try {
-        $siteUrl = Get-PnPSite -GroupId $groupId -ErrorAction Stop
+        $teamId = (Get-TeamChannel -GroupId <YourTeamId> | Where-Object { $_.Id -eq $channelId }).GroupId
+        $site = Get-PnPSite -GroupId $teamId -ErrorAction Stop
+        $channelFolderUrl = $site.Url + "/Shared Documents/" + (Get-TeamChannel -GroupId $teamId | Where-Object { $_.Id -eq $channelId }).DisplayName
         $results += [PSCustomObject]@{
-            GroupID = $groupId
-            SharePointURL = $siteUrl.Url
+            ChannelID = $channelId
+            SharePointFolderURL = $channelFolderUrl
         }
     }
     catch {
         $results += [PSCustomObject]@{
-            GroupID = $groupId
-            SharePointURL = "Not Found or Access Denied"
+            ChannelID = $channelId
+            SharePointFolderURL = "Not Found or Access Denied"
         }
     }
 }
 
 # Export results to CSV
-$results | Export-Csv -Path "C:\Path\To\Output\SharePointURLs.csv" -NoTypeInformation
+$results | Export-Csv -Path "C:\Path\To\Output\ChannelURLs.csv" -NoTypeInformation
 
-Write-Output "Results have been saved to 'C:\Path\To\
+Write-Output "Results have been saved to 'C:\Path\To\Output\ChannelURLs.csv'"
