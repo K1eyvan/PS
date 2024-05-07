@@ -1,39 +1,43 @@
-
+# Required Modules
 Import-Module ImportExcel  # Ensure you have the ImportExcel module installed
 Import-Module SharePointPnPPowerShellOnline  # Ensure PnP PowerShell is installed
 
-
+# Function to connect to SharePoint
 function ConnectToSharePoint {
     $adminUrl = "https://<your-tenant>-admin.sharepoint.com"
     $userCredential = Get-Credential
     Connect-PnPOnline -Url $adminUrl -Credentials $userCredential
 }
 
-# Read Teams from Excel
+# Read Group IDs from Excel
 $excelPath = "C:\Path\To\Your\ExcelFile.xlsx"
-$teams = Import-Excel -Path $excelPath
+$groups = Import-Excel -Path $excelPath
 
-
+# Connect to SharePoint
 ConnectToSharePoint
 
-
+# Prepare results list
 $results = @()
 
-foreach ($team in $teams) {
-    $site = Get-PnPTenantSite -Detailed | Where-Object { $_.Url -like "*$($team.ID)*" }
-    if ($site) {
+# Retrieve SharePoint URLs using Group IDs and store results
+foreach ($group in $groups) {
+    $groupId = $group.ID  # Ensure your Excel has a column named 'ID' for Group IDs
+    try {
+        $siteUrl = Get-PnPSite -GroupId $groupId -ErrorAction Stop
         $results += [PSCustomObject]@{
-            TeamName = $team.Name
-            SharePointURL = $site.Url
+            GroupID = $groupId
+            SharePointURL = $siteUrl.Url
         }
-    } else {
+    }
+    catch {
         $results += [PSCustomObject]@{
-            TeamName = $team.Name
-            SharePointURL = "Not Found"
+            GroupID = $groupId
+            SharePointURL = "Not Found or Access Denied"
         }
     }
 }
 
+# Export results to CSV
 $results | Export-Csv -Path "C:\Path\To\Output\SharePointURLs.csv" -NoTypeInformation
 
-Write-Output "Results have been saved to 'C:\Path\To\Output\SharePointURLs.csv'"
+Write-Output "Results have been saved to 'C:\Path\To\
